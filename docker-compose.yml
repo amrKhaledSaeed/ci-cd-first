@@ -1,0 +1,91 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: laravel_app
+    cpus: '1.0'
+    mem_limit: 512m
+    read_only: true
+    userns_mode: private
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:./seccomp-profile.json
+    volumes:
+      - .:/var/www/html:ro
+      - /var/www/html/.docker-secrets
+      - app_storage:/var/www/html/storage
+      - app_bootstrap_cache:/var/www/html/bootstrap/cache
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    ports:
+      - '8000:8000'
+    environment:
+      - APP_ENV=${APP_ENV:-local}
+      - APP_DEBUG=${APP_DEBUG:-true}
+      - APP_KEY_FILE=/run/secrets/app_key
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-laravel}
+      - DB_USERNAME=${DB_USERNAME:-laravel}
+      - DB_PASSWORD_FILE=/run/secrets/db_password
+    secrets:
+      - app_key
+      - db_password
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - laravel
+
+  db:
+    image: mysql:8.0
+    container_name: laravel_db
+    cpus: '1.0'
+    mem_limit: 1g
+    read_only: true
+    userns_mode: private
+    security_opt:
+      - no-new-privileges:true
+      - seccomp:./seccomp-profile.json
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_USER: ${DB_USERNAME:-laravel}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+      - db_root_password
+    ports:
+      - '${DB_PORT:-3306}:3306'
+    volumes:
+      - db_data:/var/lib/mysql
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+      - /var/run/mysqld:size=64m,mode=755
+    networks:
+      - laravel
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 5
+      interval: 10s
+
+volumes:
+  app_storage:
+  app_bootstrap_cache:
+  db_data:
+
+secrets:
+  app_key:
+    file: ${APP_KEY_SECRET_FILE:-./.docker-secrets/app_key}
+  db_password:
+    file: ${DB_PASSWORD_SECRET_FILE:-./.docker-secrets/db_password}
+  db_root_password:
+    file: ${DB_ROOT_PASSWORD_SECRET_FILE:-./.docker-secrets/db_root_password}
+
+networks:
+  laravel:
+    driver: bridge
