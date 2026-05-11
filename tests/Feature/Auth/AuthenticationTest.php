@@ -7,6 +7,12 @@ use App\Models\User;
 use Laravel\Fortify\Features;
 use Livewire\Livewire;
 
+use function Pest\Laravel\withoutVite;
+
+beforeEach(function (): void {
+    withoutVite();
+});
+
 test('login screen can be rendered', function () {
     $response = $this->get('/login');
 

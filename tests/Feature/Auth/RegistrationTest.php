@@ -6,6 +6,12 @@ use App\Enums\UserType;
 use App\Livewire\Auth\Register;
 use Livewire\Livewire;
 
+use function Pest\Laravel\withoutVite;
+
+beforeEach(function (): void {
+    withoutVite();
+});
+
 test('registration screen can be rendered', function () {
     $response = $this->get('/register');
 

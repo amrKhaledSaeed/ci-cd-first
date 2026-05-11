@@ -6,6 +6,12 @@ use App\Models\User;
 use Laravel\Fortify\Features;
 use Livewire\Livewire;
 
+use function Pest\Laravel\withoutVite;
+
+beforeEach(function (): void {
+    withoutVite();
+});
+
 test('two factor challenge redirects to login when not authenticated', function () {
     if (! Features::canManageTwoFactorAuthentication()) {
         $this->markTestSkipped('Two-factor authentication is not enabled.');
