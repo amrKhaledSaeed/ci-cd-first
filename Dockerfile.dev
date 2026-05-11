@@ -1,16 +1,6 @@
 # Dockerfile.dev - Development environment
 # Use this for local development with docker-compose
 
-# Node builder stage: install JS dependencies and build assets.
-FROM node:20-alpine@sha256:afdf98210b07b586eb71fa22ba2e432e058e4cd1304d31ed60888755b8c865fb AS node-builder
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
-COPY . ./
-RUN npm run build
-
 # PHP builder stage: install PHP extensions and Composer dependencies.
 FROM php:8.4-cli@sha256:2d8803a7d8ac6c66d50ae46efc521417ef984ab1f419a3ce28293d86c267c32 AS builder
 
@@ -33,6 +23,20 @@ COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
 COPY . ./
+
+# Node builder stage: install JS dependencies and build assets.
+FROM node:20-alpine@sha256:afdf98210b07b586eb71fa22ba2e432e058e4cd1304d31ed60888755b8c865fb AS node-builder
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY --from=builder /var/www/html /app
+RUN npm run build
+
+# Application builder stage with compiled frontend assets.
+FROM builder AS app-builder
+
 COPY --from=node-builder /app/public/build /var/www/html/public/build
 
 # Final development stage: runtime image with built application.
@@ -44,7 +48,7 @@ WORKDIR /var/www/html
 RUN useradd -m -u 1000 laravel
 
 # Copy application from builder.
-COPY --from=builder /var/www/html /var/www/html
+COPY --from=app-builder /var/www/html /var/www/html
 
 # Keep application code read-only to the runtime user and only allow Laravel
 # to write its runtime storage and cache paths.
