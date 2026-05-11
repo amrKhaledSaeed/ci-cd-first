@@ -15,6 +15,9 @@ declare(strict_types=1);
 
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\LazilyRefreshDatabase::class)
+    ->beforeEach(function (): void {
+        $this->withoutVite();
+    })
     ->in('Feature', 'Unit');
 
 /*
