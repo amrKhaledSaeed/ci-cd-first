@@ -13,6 +13,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        $this->withoutVite();
         $this->afterApplicationCreated(fn () => Http::preventStrayRequests());
     }
 }
