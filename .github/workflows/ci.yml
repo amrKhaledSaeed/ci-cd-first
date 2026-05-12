@@ -55,13 +55,24 @@ jobs:
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build production Docker image
+      - name: Build production PHP runtime image
         env:
           DOCKER_CONTENT_TRUST: '1'
-        run: docker build -t laravel-app-ci -f Dockerfile.prod .
+        run: docker build --target php-runtime -t laravel-app-php-ci:${{ github.sha }} -f Dockerfile.prod .
 
-      - name: Scan Docker image for vulnerabilities
+      - name: Build production Nginx runtime image
+        env:
+          DOCKER_CONTENT_TRUST: '1'
+        run: docker build --target nginx-runtime -t laravel-app-nginx-ci:${{ github.sha }} -f Dockerfile.prod .
+
+      - name: Scan PHP runtime image for vulnerabilities
         run: |
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy image --exit-code 1 --severity CRITICAL,HIGH laravel-app-ci
+            aquasec/trivy image --exit-code 1 --severity CRITICAL,HIGH laravel-app-php-ci:${{ github.sha }}
+
+      - name: Scan Nginx runtime image for vulnerabilities
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy image --exit-code 1 --severity CRITICAL,HIGH laravel-app-nginx-ci:${{ github.sha }}

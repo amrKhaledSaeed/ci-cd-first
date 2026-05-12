@@ -37,7 +37,7 @@ The current implementation is not production-ready yet. The largest risks are Do
    - Done: both Dockerfiles now use a shared `php-base` stage with the required PHP extensions.
    - Done: the builder and runtime stages inherit from `php-base`, avoiding extension drift.
 
-2. **`Dockerfile.prod` default build target is Nginx only**
+2. **`Dockerfile.prod` default build target is Nginx only** - Fixed
 
    The final stage in `Dockerfile.prod` is `nginx-runtime`, so `docker build -f Dockerfile.prod .` produces only the Nginx image by default.
 
@@ -46,11 +46,11 @@ The current implementation is not production-ready yet. The largest risks are Do
    - A deployment using the default image would not contain PHP-FPM.
 
    Recommended fix:
-   - Build and scan both targets explicitly:
+   - Done: CI builds and scans both targets explicitly:
      - `docker build --target php-runtime -t laravel-app-php-ci -f Dockerfile.prod .`
      - `docker build --target nginx-runtime -t laravel-app-nginx-ci -f Dockerfile.prod .`
-   - Scan both images with Trivy.
-   - Add a production compose file or deployment manifest showing both services.
+   - Done: both images are scanned with Trivy.
+   - Done: `docker-compose.prod.yml` shows both production services.
 
 3. **Nginx FastCGI configuration does not match PHP-FPM runtime**
 
