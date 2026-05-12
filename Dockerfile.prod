@@ -1,8 +1,8 @@
 # Dockerfile.prod - Production environment
 # Use this for building production-ready images with proper server
 
-# PHP builder stage: install PHP extensions and Composer dependencies.
-FROM php:8.4-fpm@sha256:072b8cdef8072604ae97fde8bbc003e60e815314724e232bf7e34950640c7044 AS builder
+# Shared PHP base stage with runtime extensions.
+FROM php:8.4-fpm@sha256:072b8cdef8072604ae97fde8bbc003e60e815314724e232bf7e34950640c7044 AS php-base
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -14,6 +14,9 @@ RUN apt-get update \
     libxml2-dev \
     && docker-php-ext-install pdo_mysql zip mbstring exif pcntl bcmath gd \
     && rm -rf /var/lib/apt/lists/*
+
+# PHP builder stage: install Composer dependencies.
+FROM php-base AS builder
 
 COPY --from=composer:2@sha256:a3df561dbdddfdb9832ec50f41c0e2f1d27445a67bd71415f05467fedbb2c3c7 /usr/bin/composer /usr/local/bin/composer
 
@@ -38,7 +41,7 @@ FROM builder AS app-builder
 COPY --from=node-builder /app/public/build /var/www/html/public/build
 
 # Production PHP-FPM stage.
-FROM php:8.4-fpm@sha256:072b8cdef8072604ae97fde8bbc003e60e815314724e232bf7e34950640c7044 AS php-runtime
+FROM php-base AS php-runtime
 
 WORKDIR /var/www/html
 

@@ -1,8 +1,8 @@
 # Dockerfile.dev - Development environment
 # Use this for local development with docker-compose
 
-# PHP builder stage: install PHP extensions and Composer dependencies.
-FROM php:8.4-cli@sha256:2d8803a7d8ac6c66d50ae46efc521417ef984ab1f419a3ce28293d86c267c32 AS builder
+# Shared PHP base stage with runtime extensions.
+FROM php:8.4-cli@sha256:2d8803a7d8ac6c66d50ae46efc521417ef984ab1f419a3ce28293d86c267c32 AS php-base
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -14,6 +14,9 @@ RUN apt-get update \
     libxml2-dev \
     && docker-php-ext-install pdo_mysql zip mbstring exif pcntl bcmath gd \
     && rm -rf /var/lib/apt/lists/*
+
+# PHP builder stage: install Composer dependencies.
+FROM php-base AS builder
 
 COPY --from=composer:2@sha256:a3df561dbdddfdb9832ec50f41c0e2f1d27445a67bd71415f05467fedbb2c3c7 /usr/bin/composer /usr/local/bin/composer
 
@@ -38,7 +41,7 @@ FROM builder AS app-builder
 COPY --from=node-builder /app/public/build /var/www/html/public/build
 
 # Final development stage: runtime image with built application.
-FROM php:8.4-cli AS runtime
+FROM php-base AS runtime
 
 WORKDIR /var/www/html
 
