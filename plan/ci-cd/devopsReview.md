@@ -52,9 +52,9 @@ The current implementation is not production-ready yet. The largest risks are Do
    - Done: both images are scanned with Trivy.
    - Done: `docker-compose.prod.yml` shows both production services.
 
-3. **Nginx FastCGI configuration does not match PHP-FPM runtime**
+3. **Nginx FastCGI configuration does not match PHP-FPM runtime** - Fixed
 
-   `nginx/default.conf` uses:
+   `nginx/default.conf` previously used:
 
    ```nginx
    fastcgi_pass app:8000;
@@ -67,8 +67,8 @@ The current implementation is not production-ready yet. The largest risks are Do
    - The Nginx health check may return 502 when PHP routes are requested.
 
    Recommended fix:
-   - Use `fastcgi_pass app:9000;` for a PHP-FPM service named `app`.
-   - Add a production compose file with `nginx` and `app` services on the same network.
+   - Done: `nginx/default.conf` now uses `fastcgi_pass app:9000;`.
+   - Done: `docker-compose.prod.yml` includes `nginx` and `app` services on the same `laravel` network.
 
 4. **Nginx runs as non-root but listens on port 80**
 
