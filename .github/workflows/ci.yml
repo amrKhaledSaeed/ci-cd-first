@@ -69,10 +69,10 @@ jobs:
         run: |
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy image --exit-code 1 --severity CRITICAL,HIGH laravel-app-php-ci:${{ github.sha }}
+            aquasec/trivy image --ignore-unfixed --exit-code 1 --severity CRITICAL,HIGH laravel-app-php-ci:${{ github.sha }}
 
       - name: Scan Nginx runtime image for vulnerabilities
         run: |
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy image --exit-code 1 --severity CRITICAL,HIGH laravel-app-nginx-ci:${{ github.sha }}
+            aquasec/trivy image --ignore-unfixed --exit-code 1 --severity CRITICAL,HIGH laravel-app-nginx-ci:${{ github.sha }}

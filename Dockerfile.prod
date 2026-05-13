@@ -5,6 +5,7 @@
 FROM php:8.4-fpm@sha256:072b8cdef8072604ae97fde8bbc003e60e815314724e232bf7e34950640c7044 AS php-base
 
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
     unzip \
     zip \

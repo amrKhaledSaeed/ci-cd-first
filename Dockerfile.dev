@@ -5,6 +5,7 @@
 FROM php:8.4-cli@sha256:2d8803a7d8ac6c66d50ae46efc521417ef984ab1f419a3ce28293d86c267c32 AS php-base
 
 RUN apt-get update \
+    && apt-get upgrade -y \
     && apt-get install -y --no-install-recommends \
     unzip \
     zip \
