@@ -87,6 +87,9 @@ class CheckoutService
      */
     public function simulationFromSession(): array
     {
-        return TypeAs::array(Session::get(self::SIMULATION_SESSION_KEY, []), default: []);
+        /** @var array<string, mixed> $simulation */
+        $simulation = TypeAs::array(Session::get(self::SIMULATION_SESSION_KEY, []), default: []);
+
+        return $simulation;
     }
 }

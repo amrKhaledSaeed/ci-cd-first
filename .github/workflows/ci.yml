@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, bcmath, xml, gd, zip, pdo_mysql
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-install=dist --no-progress --no-interaction
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Run Pint
+        run: vendor/bin/pint --test
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse
+
+      - name: Run PHP tests
+        run: php artisan test
+
+  docker-scan:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build production PHP runtime image
+        env:
+          DOCKER_CONTENT_TRUST: '1'
+        run: docker build --target php-runtime -t laravel-app-php-ci:${{ github.sha }} -f Dockerfile.prod .
+
+      - name: Build production Nginx runtime image
+        env:
+          DOCKER_CONTENT_TRUST: '1'
+        run: docker build --target nginx-runtime -t laravel-app-nginx-ci:${{ github.sha }} -f Dockerfile.prod .
+
+      - name: Scan PHP runtime image for vulnerabilities
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy image --ignore-unfixed --exit-code 1 --severity CRITICAL,HIGH laravel-app-php-ci:${{ github.sha }}
+
+      - name: Scan Nginx runtime image for vulnerabilities
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy image --ignore-unfixed --exit-code 1 --severity CRITICAL,HIGH laravel-app-nginx-ci:${{ github.sha }}

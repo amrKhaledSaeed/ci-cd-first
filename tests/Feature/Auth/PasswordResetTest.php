@@ -9,6 +9,12 @@ use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 
+use function Pest\Laravel\withoutVite;
+
+beforeEach(function (): void {
+    withoutVite();
+});
+
 test('reset password link screen can be rendered', function () {
     $response = $this->get('/forgot-password');
 

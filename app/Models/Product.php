@@ -78,10 +78,10 @@ class Product extends Model
     public function getCategoryAttribute(): ?string
     {
         if ($this->relationLoaded('productCategory')) {
-            return $this->productCategory?->name;
+            return TypeAs::nullableString($this->productCategory?->name);
         }
 
-        return $this->productCategory()->value('name');
+        return TypeAs::nullableString($this->productCategory()->value('name'));
     }
 
     protected function casts(): array
